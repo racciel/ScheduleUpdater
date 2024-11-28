@@ -1,0 +1,9 @@
+.env
+extracted_files
+test.py
+schedule.docx
+schedule.pdf
+download/*
+screenshot.png
+access_token.py
+__pycache__
