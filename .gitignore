@@ -3,7 +3,7 @@ extracted_files
 test.py
 schedule.docx
 schedule.pdf
-download/*
+download/latest-pdf/*
 screenshot.png
 access_token.py
 __pycache__
