@@ -28,14 +28,12 @@ async def send_file_to_discord(pdf_file_path):
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user}')
-    
     pdf_file_path = os.path.join(LATEST_PDF_DIR, "schedule.pdf")
     
     if os.path.exists(pdf_file_path):
         await send_file_to_discord(pdf_file_path)
     else:
-        print("No PDF file found to send.")
-    
+        print("No PDF file found to send.")    
     await client.close() 
-    
-client.run(BOT_TOKEN)
+
+#client.run(BOT_TOKEN)

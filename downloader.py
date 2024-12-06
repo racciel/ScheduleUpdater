@@ -109,40 +109,35 @@ def handle_pdf_conversion():
     else:
         print("PDF folder is not empty, no conversion needed.")
 
-try:
-    driver.get(URL)
-    print("Page loaded. Waiting for content...")
+def download_schedule():
+    """Download the schedule document."""
+    try:
+        driver.get(URL)
+        print("Page loaded. Waiting for content...")
 
-    wait = WebDriverWait(driver, 20)
-    iframe = wait.until(EC.presence_of_element_located((By.TAG_NAME, "iframe")))
-    print("Iframe detected. Switching context...")
+        wait = WebDriverWait(driver, 20)
+        iframe = wait.until(EC.presence_of_element_located((By.TAG_NAME, "iframe")))
+        print("Iframe detected. Switching context...")
 
-    driver.switch_to.frame(iframe)
-    
-    iframe_details = driver.execute_script("return document.location.href;")
-    print(f"Iframe URL: {iframe_details}")
+        driver.switch_to.frame(iframe)
 
-    download_button = wait.until(EC.presence_of_element_located((By.ID, "DownloadADocumentCopy")))
-    print("Download button found inside iframe.")
+        download_button = wait.until(EC.presence_of_element_located((By.ID, "DownloadADocumentCopy")))
+        print("Download button found inside iframe.")
 
-    print("Attempting to trigger download via JavaScript...")
-    driver.execute_script("arguments[0].click();", download_button)
+        print("Attempting to trigger download via JavaScript...")
+        driver.execute_script("arguments[0].click();", download_button)
 
-    print("Waiting for the file to be downloaded...")
-    downloaded_file = wait_for_file(DOWNLOAD_DIR, timeout=60)
+        print("Waiting for the file to be downloaded...")
+        downloaded_file = wait_for_file(DOWNLOAD_DIR, timeout=60)
 
-    if downloaded_file:
-        print(f"File downloaded successfully: {downloaded_file}")
-
-        if handle_new_docx(downloaded_file):
-            handle_pdf_conversion()
-
-    else:
-        print("File download failed or timed out.")
-
-except Exception as e:
-    print(f"Error encountered: {e}")
-
-finally:
-    driver.switch_to.default_content()
-    driver.quit()
+        if downloaded_file:
+            print(f"File downloaded successfully: {downloaded_file}")
+            return downloaded_file
+        else:
+            print("File download failed or timed out.")
+            return None
+    except Exception as e:
+        print(f"Error encountered during download: {e}")
+        return None
+    finally:
+        driver.quit()
