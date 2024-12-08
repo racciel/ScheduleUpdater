@@ -87,7 +87,7 @@ def download_schedule():
         driver.get(URL)
         print("Page loaded. Waiting for content...")
 
-        wait = WebDriverWait(driver, 20)
+        wait = WebDriverWait(driver, 30)
         iframe = wait.until(EC.presence_of_element_located((By.TAG_NAME, "iframe")))
         print("Iframe detected. Switching context...")
 
@@ -100,7 +100,7 @@ def download_schedule():
         driver.execute_script("arguments[0].click();", download_button)
 
         print("Waiting for the file to be downloaded...")
-        downloaded_file = wait_for_file(DOWNLOAD_DIR, timeout=60)
+        downloaded_file = wait_for_file(DOWNLOAD_DIR, timeout=120)
 
         if downloaded_file:
             print(f"File downloaded successfully: {downloaded_file}")
@@ -114,7 +114,7 @@ def download_schedule():
     finally:
         driver.quit()
 
-def wait_for_file(download_dir, timeout=30):
+def wait_for_file(download_dir, timeout=120):
     """Wait for a new file to appear in the directory."""
     start_time = time.time()
     while time.time() - start_time < timeout:
