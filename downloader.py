@@ -1,6 +1,5 @@
 import os
 import time
-import hashlib
 import shutil
 import subprocess
 from selenium import webdriver
@@ -30,44 +29,12 @@ options.set_preference(
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 )
 
-service = Service(os.getenv("GECKODRIVER_PATH"))
+service = Service(os.getenv("GECKODRIVER_PATH"), log_path="/dev/null")  # Suppress Geckodriver logs
 driver = webdriver.Firefox(service=service, options=options)
 
-def wait_for_file(download_dir, timeout=30):
-    """Wait for a new file to appear in the directory."""
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        files = os.listdir(download_dir)
-        if files:
-            files = sorted(files, key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
-            newest_file = os.path.join(download_dir, files[0])
-            if os.path.isfile(newest_file):
-                return newest_file
-        time.sleep(1)
-    return None
-
-def compute_file_hash(file_path):
-    """Compute the SHA256 hash of a file."""
-    hash_sha256 = hashlib.sha256()
-    with open(file_path, "rb") as file:
-        for chunk in iter(lambda: file.read(4096), b""):
-            hash_sha256.update(chunk)
-    return hash_sha256.hexdigest()
-
-def convert_docx_to_pdf_libreoffice(docx_path):
-    """Convert a DOCX file to PDF using LibreOffice."""
-    try:
-        pdf_dir = os.path.dirname(docx_path)
-        subprocess.run(
-            ["libreoffice", "--headless", "--convert-to", "pdf", docx_path, "--outdir", pdf_dir],
-            check=True,
-        )
-        pdf_path = os.path.splitext(docx_path)[0] + ".pdf"
-        print(f"PDF converted successfully: {pdf_path}")
-        return pdf_path
-    except subprocess.CalledProcessError as e:
-        print(f"Error during conversion: {e}")
-        return None
+def compare_file_sizes(file1, file2):
+    """Compare file sizes to determine if content has changed."""
+    return os.path.getsize(file1) != os.path.getsize(file2)
 
 def delete_file(file_path):
     """Delete a file if it exists."""
@@ -80,10 +47,7 @@ def handle_new_docx(downloaded_file):
     latest_docx_file = os.path.join(LATEST_DOCX_DIR, "schedule.docx")
 
     if os.path.exists(latest_docx_file):
-        old_hash = compute_file_hash(latest_docx_file)
-        new_hash = compute_file_hash(downloaded_file)
-
-        if old_hash == new_hash:
+        if not compare_file_sizes(latest_docx_file, downloaded_file):
             print("No change detected in the document, deleting downloaded file.")
             delete_file(downloaded_file)
             return False
@@ -141,3 +105,16 @@ def download_schedule():
         return None
     finally:
         driver.quit()
+
+def wait_for_file(download_dir, timeout=30):
+    """Wait for a new file to appear in the directory."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        files = os.listdir(download_dir)
+        if files:
+            files = sorted(files, key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
+            newest_file = os.path.join(download_dir, files[0])
+            if os.path.isfile(newest_file):
+                return newest_file
+        time.sleep(1)
+    return None

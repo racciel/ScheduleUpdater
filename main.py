@@ -35,7 +35,7 @@ async def process_schedule():
         latest_pdf = os.path.join(LATEST_PDF_DIR, "schedule.pdf")
         if os.path.exists(latest_pdf):
             print("New PDF generated. Sending to Discord...")
-            await client.start(BOT_TOKEN)  # Updated to avoid asyncio.run() issue
+            await client.start(BOT_TOKEN)
         else:
             print("PDF conversion failed. File not sent.")
 
