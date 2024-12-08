@@ -2,6 +2,7 @@ import os
 import time
 import shutil
 import subprocess
+from zlib import crc32
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.service import Service
@@ -32,9 +33,13 @@ options.set_preference(
 service = Service(os.getenv("GECKODRIVER_PATH"), log_path="/dev/null")  # Suppress Geckodriver logs
 driver = webdriver.Firefox(service=service, options=options)
 
-def compare_file_sizes(file1, file2):
-    """Compare file sizes to determine if content has changed."""
-    return os.path.getsize(file1) != os.path.getsize(file2)
+def compute_crc32(file_path):
+    """Compute the CRC32 checksum of a file."""
+    prev = 0
+    with open(file_path, "rb") as file:
+        for chunk in iter(lambda: file.read(4096), b""):
+            prev = crc32(chunk, prev)
+    return f"{prev & 0xFFFFFFFF:08x}"
 
 def delete_file(file_path):
     """Delete a file if it exists."""
@@ -47,7 +52,10 @@ def handle_new_docx(downloaded_file):
     latest_docx_file = os.path.join(LATEST_DOCX_DIR, "schedule.docx")
 
     if os.path.exists(latest_docx_file):
-        if not compare_file_sizes(latest_docx_file, downloaded_file):
+        old_crc = compute_crc32(latest_docx_file)
+        new_crc = compute_crc32(downloaded_file)
+
+        if old_crc == new_crc:
             print("No change detected in the document, deleting downloaded file.")
             delete_file(downloaded_file)
             return False
